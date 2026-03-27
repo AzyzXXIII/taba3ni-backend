@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { Strategy, ExtractJwt } = require('passport-jwt') as typeof import('passport-jwt');
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/users.service';
 import type { JwtUser } from '../../../common/interfaces/jwt-user.interface';
@@ -12,7 +13,7 @@ export interface JwtPayload {
 }
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
