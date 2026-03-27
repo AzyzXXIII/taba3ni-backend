@@ -3,9 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/users.service';
+import type { JwtUser } from '../../../common/interfaces/jwt-user.interface';
 
 export interface JwtPayload {
-  sub: string;   // user id
+  sub: string;
   email: string;
   role: string;
 }
@@ -19,13 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
-  // Called automatically by Passport after token signature is verified.
-  // Whatever we return here is attached to request.user
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<JwtUser> {
     const user = await this.usersService.findOne(payload.sub);
 
     if (!user) {
@@ -36,7 +35,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Account is deactivated');
     }
 
-    // request.user will have: id, email, role (enough for guards + @CurrentUser)
     return { id: user.id, email: user.email, role: user.role, name: user.name };
   }
 }
