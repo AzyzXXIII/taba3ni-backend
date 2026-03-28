@@ -4,10 +4,11 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';  // ✅ top-level import, never require() inside a method
+import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { Role } from '../../common/enums/role.enum';
 import type { JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
@@ -23,7 +24,12 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    const user = await this.usersService.create(dto);
+    // ✅ Fix #5 (service side): always force CLIENT role on public registration.
+    // Admins and distributors are created by admin via POST /users.
+    const user = await this.usersService.create({
+      ...dto,
+      role: Role.CLIENT,
+    });
 
     const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
@@ -42,7 +48,6 @@ export class AuthService {
       throw new UnauthorizedException('Your account has been deactivated.');
     }
 
-    // ✅ bcrypt imported at top — no require() here
     const passwordValid = await bcrypt.compare(dto.password, user.password);
     if (!passwordValid) {
       throw new UnauthorizedException('Invalid email or password');
