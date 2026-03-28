@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 import { ROLES_KEY } from '../decorators/roles.decorator';
@@ -25,9 +20,7 @@ export class RolesGuard implements CanActivate {
     }
 
     // ✅ Fix #2: typed request — no more implicit any on user
-    const { user } = context
-      .switchToHttp()
-      .getRequest<Request & { user: JwtUser }>();
+    const { user } = context.switchToHttp().getRequest<Request & { user: JwtUser }>();
 
     if (!user) {
       throw new ForbiddenException('No user found in request');
