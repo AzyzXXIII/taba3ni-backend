@@ -1,9 +1,9 @@
-// src/modules/users/dto/create-user.dto.ts
+// src/modules/auth/dto/register.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
 import { Role } from '../../../common/enums/role.enum';
 
-export class CreateUserDto {
+export class RegisterDto {
   @ApiProperty({ example: 'John Doe', description: 'Full name' })
   @IsString()
   name: string;
@@ -31,23 +31,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
-
-  @ApiPropertyOptional({ example: 'Carrefour Lac 2', description: 'Store name (for clients)' })
-  @IsOptional()
-  @IsString()
-  storeName?: string;
-
-  @ApiPropertyOptional({ example: 'TN-123456789', description: 'Tax ID (for clients)' })
-  @IsOptional()
-  @IsString()
-  taxId?: string;
-
-  @ApiPropertyOptional({ example: 'Refrigerated Truck', description: 'Vehicle (for distributors)' })
-  @IsOptional()
-  @IsString()
-  vehicle?: string;
-
-  @ApiPropertyOptional({ example: ['Tunis', 'Ariana'], description: 'Delivery zones (for distributors)' })
-  @IsOptional()
-  zones?: string[];
 }
