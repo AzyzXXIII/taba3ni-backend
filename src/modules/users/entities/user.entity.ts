@@ -25,8 +25,8 @@ export class User {
   @Column({ unique: true, length: 150 })
   email: string;
 
-  // ✅ NO select:false — we control exposure via sanitizeUser() in the service.
-  // select:false breaks findByEmailWithPassword even when password is listed in select:[].
+  // ✅ No select:false — password exposure is handled by sanitizeUser() in the service.
+  // TypeORM's select:false breaks explicit select:['password'] queries too — a known gotcha.
   @Column()
   password: string;
 
@@ -66,6 +66,8 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
+  // ── Hooks ────────────────────────────────────────────────────
+
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
@@ -74,6 +76,9 @@ export class User {
     }
   }
 
+  // ✅ Fix #6: toJSON() removed — sanitizeUser() in UsersService is the single
+  // source of truth for stripping sensitive fields. Two competing mechanisms
+  // cause subtle bugs when one gets updated but the other doesn't.
   async validatePassword(plainText: string): Promise<boolean> {
     return bcrypt.compare(plainText, this.password);
   }
