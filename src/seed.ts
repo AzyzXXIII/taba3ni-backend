@@ -7,14 +7,13 @@
 
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs'; // ✅ Fix #3: was importing 'bcrypt', app uses 'bcryptjs'
 import { User } from './modules/users/entities/user.entity';
 import { Role } from './common/enums/role.enum';
 import { UserStatus } from './common/enums/user-status.enum';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const AppDataSource = new DataSource({
@@ -25,8 +24,8 @@ const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD ?? '123456',
   database: process.env.DB_NAME ?? 'taba3ni_db',
   entities: [User],
-  synchronize: false, // Set to false for seeding (don't auto-sync)
-  logging: true,
+  synchronize: false,
+  logging: false,
 });
 
 async function seed() {
@@ -36,7 +35,6 @@ async function seed() {
 
     const repo = AppDataSource.getRepository(User);
 
-    // Clear existing users (optional - be careful!)
     const count = await repo.count();
     if (count > 0) {
       console.log(`⚠️  Found ${count} existing users. Deleting them...`);
@@ -47,21 +45,21 @@ async function seed() {
     const hash = (plain: string) => bcrypt.hash(plain, 10);
 
     const users: Partial<User>[] = [
-      // ── Admin ──────────────────────────────────────────
+      // ── Admin ──────────────────────────────────────────────
       {
-        name: 'Admin User',  // ← Changed from firstName/lastName
+        name: 'Admin User',
         email: 'admin@taba3ni.tn',
         password: await hash('Admin1234!'),
         phone: '+216 71 000 000',
         city: 'Tunis',
         role: Role.ADMIN,
-        status: UserStatus.ACTIVE,  // ← Changed from isActive
+        status: UserStatus.ACTIVE,
         notes: 'Primary system administrator',
       },
 
-      // ── Distributors ──────────────────────────────────
+      // ── Distributors ───────────────────────────────────────
       {
-        name: 'Ahmed Mahmoudi',  // ← Combined name
+        name: 'Ahmed Mahmoudi',
         email: 'ahmed.mahmoudi@taba3ni.tn',
         password: await hash('Dist1234!'),
         phone: '+216 98 123 456',
@@ -94,9 +92,9 @@ async function seed() {
         zones: ['Ben Arous', 'La Marsa', 'Carthage'],
       },
 
-      // ── Clients ────────────────────────────────────────
+      // ── Clients ────────────────────────────────────────────
       {
-        name: 'Carrefour Lac 2',  // ← Combined store name
+        name: 'Carrefour Lac 2',
         email: 'client@taba3ni.tn',
         password: await hash('Client1234!'),
         phone: '+216 71 123 456',
@@ -128,65 +126,23 @@ async function seed() {
         storeName: 'Monoprix Menzah',
         taxId: 'TN-345678901',
       },
-      {
-        name: 'Superette Ariana',
-        email: 'superette.ariana@email.com',
-        password: await hash('Client1234!'),
-        phone: '+216 71 456 789',
-        city: 'Ariana',
-        role: Role.CLIENT,
-        status: UserStatus.ACTIVE,
-        storeName: 'Superette Ariana',
-        taxId: 'TN-456789012',
-      },
     ];
 
-    // Insert users
-    for (const user of users) {
-      const entity = repo.create(user);
+    for (const userData of users) {
+      const entity = repo.create(userData);
       await repo.save(entity);
     }
 
-    console.log(`🌱 Seeded ${users.length} users successfully!`);
+    console.log(`\n🌱 Seeded ${users.length} users successfully!`);
     console.log('\n📋 Demo Credentials:');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  👑 ADMIN:');
-    console.log('     Email: admin@taba3ni.tn');
-    console.log('     Password: Admin1234!');
-    console.log('');
-    console.log('  🚚 DISTRIBUTORS:');
-    console.log('     Email: ahmed.mahmoudi@taba3ni.tn');
-    console.log('     Password: Dist1234!');
-    console.log('     Email: mohamed.trabelsi@taba3ni.tn');
-    console.log('     Password: Dist1234!');
-    console.log('     Email: karim.belaid@taba3ni.tn');
-    console.log('     Password: Dist1234!');
-    console.log('');
-    console.log('  👤 CLIENTS:');
-    console.log('     Email: client@taba3ni.tn');
-    console.log('     Password: Client1234!');
-    console.log('     Email: general.marsa@email.com');
-    console.log('     Password: Client1234!');
-    console.log('     Email: monoprix.menzah@email.com');
-    console.log('     Password: Client1234!');
-    console.log('     Email: superette.ariana@email.com');
-    console.log('     Password: Client1234!');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    // Optional: Show distribution statistics
-    const adminCount = await repo.count({ where: { role: Role.ADMIN } });
-    const distributorCount = await repo.count({ where: { role: Role.DISTRIBUTOR } });
-    const clientCount = await repo.count({ where: { role: Role.CLIENT } });
-    
-    console.log('\n📊 Database Statistics:');
-    console.log(`   👑 Admins: ${adminCount}`);
-    console.log(`   🚚 Distributors: ${distributorCount}`);
-    console.log(`   👤 Clients: ${clientCount}`);
-    console.log(`   📈 Total: ${users.length}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  👑 ADMIN:    admin@taba3ni.tn       / Admin1234!');
+    console.log('  🚚 DIST:     ahmed.mahmoudi@...     / Dist1234!');
+    console.log('  👤 CLIENT:   client@taba3ni.tn      / Client1234!');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     await AppDataSource.destroy();
-    console.log('\n✅ Seeding completed successfully!');
-    
+    console.log('\n✅ Done!');
   } catch (error) {
     console.error('❌ Seed failed:', error);
     await AppDataSource.destroy();
@@ -194,5 +150,4 @@ async function seed() {
   }
 }
 
-// Run the seed function
 seed();
